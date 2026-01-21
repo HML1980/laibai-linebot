@@ -32,7 +32,7 @@ user_states = {}
 
 def call_iztro(date, hour, gender, action='chart', target_date=None):
     """呼叫 Node.js iztro 計算"""
-    cmd = ['node', '/opt/linebot/ziwei/ziwei_calc.js', date, str(hour), gender, action]
+    cmd = ['/usr/bin/node', '/opt/linebot/ziwei/ziwei_calc.js', date, str(hour), gender, action]
     if target_date:
         cmd.append(target_date)
     
