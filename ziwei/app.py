@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 籟柏紫微斗數 LINE Bot
-使用 py-iztro 開源庫進行精確排盤
+使用 iztro-py 純 Python 庫進行精確排盤
 """
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
@@ -13,7 +13,7 @@ from linebot.models import (
 )
 import os
 from datetime import datetime
-from py_iztro import Astro
+from iztro_py import astro
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.environ.get('LINE_CHANNEL_ACCESS_TOKEN_ZIWEI', ''))
@@ -23,76 +23,124 @@ handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET_ZIWEI', ''))
 SHICHEN = ['子時(23-01)', '丑時(01-03)', '寅時(03-05)', '卯時(05-07)', '辰時(07-09)', '巳時(09-11)', 
            '午時(11-13)', '未時(13-15)', '申時(15-17)', '酉時(17-19)', '戌時(19-21)', '亥時(21-23)']
 
+# 星名英轉中對照表
+STAR_NAMES = {
+    'ziweiMaj': '紫微', 'tianjiMaj': '天機', 'taiyangMaj': '太陽', 'wuquMaj': '武曲',
+    'tiantongMaj': '天同', 'lianzhenMaj': '廉貞', 'tianfuMaj': '天府', 'taiyinMaj': '太陰',
+    'tanlangMaj': '貪狼', 'jumenMaj': '巨門', 'tianxiangMaj': '天相', 'tianliangMaj': '天梁',
+    'qishaMaj': '七殺', 'pojunMaj': '破軍',
+    # 輔星
+    'zuofuMin': '左輔', 'youbiMin': '右弼', 'wenchangMin': '文昌', 'wenquMin': '文曲',
+    'lucunMin': '祿存', 'tianmaMin': '天馬', 'qingyangMin': '擎羊', 'tuoluoMin': '陀羅',
+    'huoxingMin': '火星', 'lingxingMin': '鈴星', 'tiankuiMin': '天魁', 'tianyueMin': '天鉞',
+    'dikongMin': '地空', 'dijieMin': '地劫'
+}
+
+# 宮位英轉中
+PALACE_NAMES = {
+    'soulPalace': '命宮', 'siblingsPalace': '兄弟', 'spousePalace': '夫妻',
+    'childrenPalace': '子女', 'wealthPalace': '財帛', 'healthPalace': '疾厄',
+    'surfacePalace': '遷移', 'friendsPalace': '交友', 'careerPalace': '官祿',
+    'propertyPalace': '田宅', 'spiritPalace': '福德', 'parentsPalace': '父母'
+}
+
 user_states = {}
-astro = Astro()
+
+# 生肖對照
+ZODIAC_LIST = ['鼠', '牛', '虎', '兔', '龍', '蛇', '馬', '羊', '猴', '雞', '狗', '豬']
+
+def get_correct_zodiac(lunar_date_str):
+    """根據農曆年份計算正確生肖"""
+    # 從農曆日期字串提取年份，例如 "1979年腊月初九" -> 1979
+    import re
+    match = re.search(r'(\d{4})年', lunar_date_str)
+    if match:
+        lunar_year = int(match.group(1))
+        # 1900年是鼠年，以此為基準
+        zodiac_idx = (lunar_year - 1900) % 12
+        return ZODIAC_LIST[zodiac_idx]
+    return ""
+
+def translate_star(star_code):
+    """翻譯星名"""
+    # 移除亮度和四化標記
+    base = star_code.split('(')[0].split('[')[0]
+    name = STAR_NAMES.get(base, base)
+    
+    # 加回亮度
+    if '(' in star_code:
+        brightness = star_code.split('(')[1].split(')')[0]
+        name += f"({brightness})"
+    
+    # 加回四化
+    if '[' in star_code:
+        mutagen = star_code.split('[')[1].split(']')[0]
+        name += f"[{mutagen}]"
+    
+    return name
 
 def get_ziwei_chart(year, month, day, hour_idx, gender):
     """取得紫微斗數命盤"""
     date_str = f"{year}-{month}-{day}"
     gender_str = "男" if gender == "male" else "女"
-    result = astro.by_solar(date_str, hour_idx, gender_str)
+    result = astro.by_solar(date_str, hour_idx, gender_str, 'zh-TW')
     return result
-
-def format_palace_info(palace):
-    """格式化宮位資訊"""
-    major_stars = []
-    for star in palace.major_stars:
-        name = star.name
-        brightness = star.brightness if star.brightness else ""
-        mutagen = star.mutagen if star.mutagen else ""
-        if mutagen:
-            name += f"化{mutagen}"
-        if brightness:
-            name += f"[{brightness}]"
-        major_stars.append(name)
-    
-    minor_stars = [s.name for s in palace.minor_stars]
-    
-    return {
-        'name': palace.name,
-        'branch': palace.earthly_branch,
-        'stem': palace.heavenly_stem,
-        'major': major_stars,
-        'minor': minor_stars,
-        'is_body': palace.is_body_palace
-    }
 
 def create_ziwei_flex(result, year):
     """建立紫微斗數 Flex Message"""
     
-    lunar_date = result.lunar_date
-    chinese_date = result.chinese_date
-    soul_palace = result.earthly_branch_of_soul_palace
-    body_palace = result.earthly_branch_of_body_palace
-    soul_star = result.soul
-    body_star = result.body
-    five_elements = result.five_elements_class
+    # 基本資訊
+    lunar_date = str(result.lunar_date) if hasattr(result, 'lunar_date') else ""
+    five_elements = str(result.five_elements_class) if hasattr(result, 'five_elements_class') else ""
+    zodiac = get_correct_zodiac(lunar_date)  # 使用修正的生肖計算
+    sign = str(result.sign) if hasattr(result, 'sign') else ""
     
-    # 整理十二宮資訊
-    palaces_info = []
-    for palace in result.palaces:
-        info = format_palace_info(palace)
-        palaces_info.append(info)
+    # 命主身主
+    soul_star = STAR_NAMES.get(str(result.soul), str(result.soul)) if hasattr(result, 'soul') else ""
+    body_star = STAR_NAMES.get(str(result.body), str(result.body)) if hasattr(result, 'body') else ""
     
-    # 找命宮主星
-    ming_stars = "空宮"
-    for p in palaces_info:
-        if p['branch'] == soul_palace:
-            ming_stars = '、'.join(p['major']) if p['major'] else '空宮'
-            break
+    # 解析十二宮
+    palaces_text = []
+    result_str = str(result)
     
-    # 建立宮位文字
-    palace_lines = []
-    for p in palaces_info:
-        body_mark = "身" if p['is_body'] else ""
-        ming_mark = "命" if p['branch'] == soul_palace else ""
-        mark = ming_mark + body_mark
-        if mark:
-            mark = f"【{mark}】"
-        stars = '、'.join(p['major'][:2]) if p['major'] else "空"
-        palace_lines.append(f"{p['name']}[{p['branch']}]{mark}: {stars}")
+    # 從字串解析宮位
+    lines = result_str.split('\n')
+    ming_stars = ""
+    shen_palace = ""
     
-    palace_text = '\n'.join(palace_lines)
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # 解析宮位行
+        for eng_name, chi_name in PALACE_NAMES.items():
+            if eng_name in line:
+                # 取得星曜
+                if ':' in line:
+                    stars_part = line.split(':')[1].strip()
+                    stars = []
+                    for s in stars_part.split(','):
+                        s = s.strip()
+                        if s:
+                            stars.append(translate_star(s))
+                    stars_str = '、'.join(stars) if stars else '空宮'
+                else:
+                    stars_str = '空宮'
+                
+                # 檢查命宮和身宮標記
+                mark = ""
+                if '[命]' in line:
+                    mark = "【命】"
+                    ming_stars = stars_str
+                if '[身]' in line:
+                    mark += "【身】"
+                    shen_palace = chi_name
+                
+                palaces_text.append(f"{chi_name}{mark}: {stars_str}")
+                break
+    
+    palace_display = '\n'.join(palaces_text) if palaces_text else "解析中..."
     current_age = datetime.now().year - year
     
     flex_content = {
@@ -110,92 +158,30 @@ def create_ziwei_flex(result, year):
             "contents": [
                 {"type": "text", "text": "【基本資料】", "weight": "bold", "color": "#6A0DAD", "size": "md"},
                 {"type": "text", "text": f"農曆：{lunar_date}", "size": "sm"},
-                {"type": "text", "text": f"干支：{chinese_date}", "size": "sm"},
-                {"type": "text", "text": f"五行局：{five_elements}", "size": "sm"},
+                {"type": "text", "text": f"生肖：{zodiac}　星座：{sign}", "size": "sm"},
+                {"type": "text", "text": f"五行局：{five_elements}", "size": "sm", "color": "#C41E3A"},
                 {"type": "separator", "margin": "md"},
                 
-                {"type": "text", "text": "【命身宮】", "weight": "bold", "color": "#6A0DAD", "size": "md", "margin": "md"},
-                {"type": "text", "text": f"命宮：{soul_palace}宮 → {ming_stars}", "size": "sm"},
-                {"type": "text", "text": f"身宮：{body_palace}宮", "size": "sm"},
+                {"type": "text", "text": "【命身資訊】", "weight": "bold", "color": "#6A0DAD", "size": "md", "margin": "md"},
+                {"type": "text", "text": f"命宮主星：{ming_stars}", "size": "sm", "weight": "bold"},
                 {"type": "text", "text": f"命主：{soul_star}　身主：{body_star}", "size": "sm"},
                 {"type": "separator", "margin": "md"},
                 
-                {"type": "text", "text": "【十二宮主星】", "weight": "bold", "color": "#6A0DAD", "size": "md", "margin": "md"},
-                {"type": "text", "text": palace_text, "size": "xs", "wrap": True},
+                {"type": "text", "text": "【十二宮】", "weight": "bold", "color": "#6A0DAD", "size": "md", "margin": "md"},
+                {"type": "text", "text": palace_display, "size": "xs", "wrap": True},
             ],
             "paddingAll": "15px"
         },
         "footer": {
             "type": "box", "layout": "vertical", "spacing": "sm",
             "contents": [
-                {"type": "button", "action": {"type": "message", "label": f"📅 查{datetime.now().year}年流年", "text": f"流年{datetime.now().year}"}, "style": "primary", "color": "#6A0DAD", "height": "sm"},
-                {"type": "button", "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"}, "style": "secondary", "height": "sm"}
+                {"type": "text", "text": "籟柏紫微 ✨ 免費服務", "size": "xs", "color": "#AAAAAA", "align": "center"},
+                {"type": "button", "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"}, "style": "secondary", "height": "sm", "margin": "md"}
             ],
             "paddingAll": "10px"
         }
     }
     return FlexSendMessage(alt_text='紫微斗數命盤', contents=flex_content)
-
-def create_horoscope_flex(result, target_year):
-    """建立流年運勢 Flex Message"""
-    try:
-        horoscope = result.horoscope(f"{target_year}-1-1")
-        
-        decadal = horoscope.decadal
-        decadal_stem = decadal.heavenly_stem
-        decadal_branch = decadal.earthly_branch
-        
-        yearly = horoscope.yearly
-        yearly_stem = yearly.heavenly_stem
-        yearly_branch = yearly.earthly_branch
-        
-        decadal_mutagen = decadal.mutagen if decadal.mutagen else []
-        yearly_mutagen = yearly.mutagen if yearly.mutagen else []
-        
-        # 大限宮名
-        decadal_palaces = decadal.palace_names if decadal.palace_names else []
-        decadal_ming = decadal_palaces[2] if len(decadal_palaces) > 2 else ""
-        
-        flex_content = {
-            "type": "bubble",
-            "size": "giga",
-            "header": {
-                "type": "box", "layout": "vertical",
-                "contents": [
-                    {"type": "text", "text": f"📅 {target_year}年 運勢分析", "weight": "bold", "size": "xl", "color": "#FFFFFF"}
-                ],
-                "backgroundColor": "#4169E1", "paddingAll": "15px"
-            },
-            "body": {
-                "type": "box", "layout": "vertical", "spacing": "md",
-                "contents": [
-                    {"type": "text", "text": "【大限運勢】", "weight": "bold", "color": "#4169E1", "size": "md"},
-                    {"type": "text", "text": f"大限宮位：{decadal_stem}{decadal_branch}", "size": "sm"},
-                    {"type": "text", "text": f"大限命宮：{decadal_ming}", "size": "sm"},
-                    {"type": "text", "text": f"大限四化：化祿{decadal_mutagen[0] if len(decadal_mutagen)>0 else ''} 化權{decadal_mutagen[1] if len(decadal_mutagen)>1 else ''} 化科{decadal_mutagen[2] if len(decadal_mutagen)>2 else ''} 化忌{decadal_mutagen[3] if len(decadal_mutagen)>3 else ''}", "size": "xs", "wrap": True},
-                    {"type": "separator", "margin": "md"},
-                    
-                    {"type": "text", "text": "【流年運勢】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
-                    {"type": "text", "text": f"流年宮位：{yearly_stem}{yearly_branch}", "size": "sm"},
-                    {"type": "text", "text": f"流年四化：化祿{yearly_mutagen[0] if len(yearly_mutagen)>0 else ''} 化權{yearly_mutagen[1] if len(yearly_mutagen)>1 else ''} 化科{yearly_mutagen[2] if len(yearly_mutagen)>2 else ''} 化忌{yearly_mutagen[3] if len(yearly_mutagen)>3 else ''}", "size": "xs", "wrap": True},
-                    {"type": "separator", "margin": "md"},
-                    
-                    {"type": "text", "text": "【運勢提示】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
-                    {"type": "text", "text": "此為基本流年資訊，詳細解盤請諮詢專業命理師。", "size": "sm", "wrap": True, "color": "#666666"},
-                ],
-                "paddingAll": "15px"
-            },
-            "footer": {
-                "type": "box", "layout": "vertical", "spacing": "sm",
-                "contents": [
-                    {"type": "button", "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"}, "style": "secondary", "height": "sm"}
-                ],
-                "paddingAll": "10px"
-            }
-        }
-        return FlexSendMessage(alt_text=f'{target_year}年運勢', contents=flex_content)
-    except Exception as e:
-        return TextSendMessage(f'流年計算錯誤：{str(e)}')
 
 def create_menu_flex():
     """建立主選單"""
@@ -218,7 +204,7 @@ def create_menu_flex():
                 {"type": "box", "layout": "vertical", "spacing": "sm", "contents": [
                     {"type": "text", "text": "🌟 排盤", "size": "md", "weight": "bold"},
                     {"type": "text", "text": "完整紫微斗數命盤", "size": "sm", "color": "#666666"},
-                    {"type": "text", "text": "十二宮、主星、輔星、四化、大限", "size": "xs", "color": "#888888"}
+                    {"type": "text", "text": "十二宮、主星、輔星、四化", "size": "xs", "color": "#888888"}
                 ]}
             ],
             "paddingAll": "20px"
@@ -307,20 +293,6 @@ def handle_postback(event):
 def handle(event):
     uid, txt = event.source.user_id, event.message.text.strip()
     
-    # 流年查詢
-    if txt.startswith('流年'):
-        try:
-            target_year = int(txt[2:]) if len(txt) > 2 else datetime.now().year
-            if uid in user_states and 'result' in user_states[uid]:
-                result = user_states[uid]['result']
-                flex_msg = create_horoscope_flex(result, target_year)
-                line_bot_api.reply_message(event.reply_token, flex_msg)
-            else:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage('請先排盤後再查詢流年\n\n請點選「排盤」開始'))
-        except:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage('格式錯誤'))
-        return
-    
     if uid in user_states:
         st = user_states[uid]
         
@@ -340,10 +312,10 @@ def handle(event):
         elif st.get('step') == 'gender':
             gender = 'male' if '男' in txt else 'female'
             y, m, d, hr = st['y'], st['m'], st['d'], st['hour']
+            del user_states[uid]
             
             try:
                 result = get_ziwei_chart(y, m, d, hr, gender)
-                user_states[uid] = {'result': result, 'year': y}
                 flex_msg = create_ziwei_flex(result, y)
                 line_bot_api.reply_message(event.reply_token, flex_msg)
             except Exception as e:
