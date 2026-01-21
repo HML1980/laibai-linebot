@@ -2,7 +2,7 @@
 """
 籟柏八字排盤 LINE Bot - 完整版
 含：四柱、藏干、十神、納音、大運、格局、Flex Message
-五行統計：只算天干地支（不含藏干）
+使用 DatetimePicker 選擇日期
 """
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
@@ -10,7 +10,7 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, 
     FlexSendMessage, QuickReply, QuickReplyButton, MessageAction,
-    FollowEvent
+    FollowEvent, PostbackEvent, DatetimePickerAction
 )
 import os, hashlib
 from datetime import datetime
@@ -32,21 +32,12 @@ WUXING_DZ = {'子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土
 
 # 地支藏干
 CANGGAN = {
-    '子': ['癸'],
-    '丑': ['己', '癸', '辛'],
-    '寅': ['甲', '丙', '戊'],
-    '卯': ['乙'],
-    '辰': ['戊', '乙', '癸'],
-    '巳': ['丙', '戊', '庚'],
-    '午': ['丁', '己'],
-    '未': ['己', '丁', '乙'],
-    '申': ['庚', '壬', '戊'],
-    '酉': ['辛'],
-    '戌': ['戊', '辛', '丁'],
-    '亥': ['壬', '甲']
+    '子': ['癸'], '丑': ['己', '癸', '辛'], '寅': ['甲', '丙', '戊'], '卯': ['乙'],
+    '辰': ['戊', '乙', '癸'], '巳': ['丙', '戊', '庚'], '午': ['丁', '己'], '未': ['己', '丁', '乙'],
+    '申': ['庚', '壬', '戊'], '酉': ['辛'], '戌': ['戊', '辛', '丁'], '亥': ['壬', '甲']
 }
 
-# 十神（以日干為主）
+# 十神
 SHISHEN_TABLE = {
     '甲': {'甲': '比肩', '乙': '劫財', '丙': '食神', '丁': '傷官', '戊': '偏財', '己': '正財', '庚': '七殺', '辛': '正官', '壬': '偏印', '癸': '正印'},
     '乙': {'乙': '比肩', '甲': '劫財', '丁': '食神', '丙': '傷官', '己': '偏財', '戊': '正財', '辛': '七殺', '庚': '正官', '癸': '偏印', '壬': '正印'},
@@ -60,7 +51,7 @@ SHISHEN_TABLE = {
     '癸': {'癸': '比肩', '壬': '劫財', '乙': '食神', '甲': '傷官', '丁': '偏財', '丙': '正財', '己': '七殺', '戊': '正官', '辛': '偏印', '庚': '正印'}
 }
 
-# 納音六十甲子
+# 納音
 NAYIN = {
     '甲子': '海中金', '乙丑': '海中金', '丙寅': '爐中火', '丁卯': '爐中火',
     '戊辰': '大林木', '己巳': '大林木', '庚午': '路旁土', '辛未': '路旁土',
@@ -96,7 +87,7 @@ RIZHU_DESC = {
 user_states = {}
 
 def calc_bazi(year, month, day, hour):
-    """使用 sxtwl 計算八字"""
+    """計算八字"""
     day_info = sxtwl.fromSolar(year, month, day)
     
     yg = TIANGAN[day_info.getYearGZ().tg]
@@ -113,10 +104,8 @@ def calc_bazi(year, month, day, hour):
     
     return {
         'year': yg + yz, 'month': mg + mz, 'day': dg + dz, 'hour': hg + hz,
-        'year_gan': yg, 'year_zhi': yz,
-        'month_gan': mg, 'month_zhi': mz,
-        'day_gan': dg, 'day_zhi': dz,
-        'hour_gan': hg, 'hour_zhi': hz,
+        'year_gan': yg, 'year_zhi': yz, 'month_gan': mg, 'month_zhi': mz,
+        'day_gan': dg, 'day_zhi': dz, 'hour_gan': hg, 'hour_zhi': hz,
         'dm': dg
     }
 
@@ -130,17 +119,12 @@ def get_nayin(ganzhi):
     return NAYIN.get(ganzhi, '')
 
 def analyze_wuxing(bazi):
-    """分析五行 - 只算天干地支（A算法）"""
+    """五行分析 - A算法"""
     wx = {'木': 0, '火': 0, '土': 0, '金': 0, '水': 0}
-    
-    # 天干（4個）
     for g in [bazi['year_gan'], bazi['month_gan'], bazi['day_gan'], bazi['hour_gan']]:
         wx[WUXING_TG[g]] += 1
-    
-    # 地支（4個）- 只算本氣
     for z in [bazi['year_zhi'], bazi['month_zhi'], bazi['day_zhi'], bazi['hour_zhi']]:
         wx[WUXING_DZ[z]] += 1
-    
     missing = [k for k, v in wx.items() if v == 0]
     return wx, missing
 
@@ -165,10 +149,8 @@ def calc_dayun(bazi, gender, year):
         start_age = (i + 1) * 10 - 5
         dayun_list.append({
             'ganzhi': TIANGAN[gan_idx] + DIZHI[zhi_idx],
-            'start': start_age,
-            'end': start_age + 9
+            'start': start_age, 'end': start_age + 9
         })
-    
     return dayun_list
 
 def judge_pattern(bazi, wx):
@@ -188,7 +170,6 @@ def judge_pattern(bazi, wx):
         if ss in ['正官', '七殺', '正財', '偏財', '正印', '偏印', '食神', '傷官']:
             pattern = f"{ss}格"
             break
-    
     return strength, pattern
 
 def daily_fortune(uid):
@@ -236,18 +217,12 @@ def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fort
                 "type": "bubble",
                 "size": "giga",
                 "header": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "contents": [
-                        {"type": "text", "text": "🔮 八字命盤", "weight": "bold", "size": "xl", "color": "#FFFFFF"}
-                    ],
-                    "backgroundColor": "#8B4513",
-                    "paddingAll": "15px"
+                    "type": "box", "layout": "vertical",
+                    "contents": [{"type": "text", "text": "🔮 八字命盤", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
+                    "backgroundColor": "#8B4513", "paddingAll": "15px"
                 },
                 "body": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "spacing": "md",
+                    "type": "box", "layout": "vertical", "spacing": "md",
                     "contents": [
                         {"type": "text", "text": "【四柱八字】", "weight": "bold", "color": "#8B4513", "size": "md"},
                         {"type": "box", "layout": "horizontal", "contents": [
@@ -290,11 +265,8 @@ def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fort
                     "paddingAll": "15px"
                 },
                 "footer": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "contents": [
-                        {"type": "text", "text": "籟柏八字 ✨ 免費服務", "size": "xs", "color": "#AAAAAA", "align": "center"}
-                    ],
+                    "type": "box", "layout": "vertical",
+                    "contents": [{"type": "text", "text": "籟柏八字 ✨ 免費服務", "size": "xs", "color": "#AAAAAA", "align": "center"}],
                     "paddingAll": "10px"
                 }
             },
@@ -302,18 +274,12 @@ def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fort
                 "type": "bubble",
                 "size": "giga",
                 "header": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "contents": [
-                        {"type": "text", "text": "🌟 今日運勢", "weight": "bold", "size": "xl", "color": "#FFFFFF"}
-                    ],
-                    "backgroundColor": "#4169E1",
-                    "paddingAll": "15px"
+                    "type": "box", "layout": "vertical",
+                    "contents": [{"type": "text", "text": "🌟 今日運勢", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
+                    "backgroundColor": "#4169E1", "paddingAll": "15px"
                 },
                 "body": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "spacing": "md",
+                    "type": "box", "layout": "vertical", "spacing": "md",
                     "contents": [
                         {"type": "text", "text": f"整體運勢：{fortune['overall']}", "size": "lg", "weight": "bold"},
                         {"type": "separator", "margin": "md"},
@@ -355,38 +321,30 @@ def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fort
                     "paddingAll": "15px"
                 },
                 "footer": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "contents": [
-                        {"type": "text", "text": f"日期：{datetime.now():%Y/%m/%d}", "size": "xs", "color": "#AAAAAA", "align": "center"}
-                    ],
+                    "type": "box", "layout": "vertical",
+                    "contents": [{"type": "text", "text": f"日期：{datetime.now():%Y/%m/%d}", "size": "xs", "color": "#AAAAAA", "align": "center"}],
                     "paddingAll": "10px"
                 }
             }
         ]
     }
-    
     return FlexSendMessage(alt_text='八字命盤與今日運勢', contents=flex_content)
 
 def create_welcome_flex():
-    """建立歡迎訊息"""
+    """歡迎訊息"""
     flex_content = {
         "type": "bubble",
         "size": "mega",
         "header": {
-            "type": "box",
-            "layout": "vertical",
+            "type": "box", "layout": "vertical",
             "contents": [
                 {"type": "text", "text": "🔮 籟柏八字", "weight": "bold", "size": "xl", "color": "#FFFFFF"},
                 {"type": "text", "text": "專業命理分析・免費服務", "size": "sm", "color": "#FFFFFF"}
             ],
-            "backgroundColor": "#8B4513",
-            "paddingAll": "20px"
+            "backgroundColor": "#8B4513", "paddingAll": "20px"
         },
         "body": {
-            "type": "box",
-            "layout": "vertical",
-            "spacing": "lg",
+            "type": "box", "layout": "vertical", "spacing": "lg",
             "contents": [
                 {"type": "text", "text": "歡迎使用籟柏八字排盤系統！", "weight": "bold", "size": "md"},
                 {"type": "separator"},
@@ -404,14 +362,12 @@ def create_welcome_flex():
                 ]},
                 {"type": "separator"},
                 {"type": "text", "text": "💡 使用方式", "weight": "bold", "color": "#8B4513", "size": "md"},
-                {"type": "text", "text": "點選下方按鈕或輸入指令開始 👇", "size": "sm", "wrap": True}
+                {"type": "text", "text": "點選下方按鈕開始 👇", "size": "sm", "wrap": True}
             ],
             "paddingAll": "20px"
         },
         "footer": {
-            "type": "box",
-            "layout": "horizontal",
-            "spacing": "md",
+            "type": "box", "layout": "horizontal", "spacing": "md",
             "contents": [
                 {"type": "button", "action": {"type": "message", "label": "🔮 排盤", "text": "排盤"}, "style": "primary", "color": "#8B4513"},
                 {"type": "button", "action": {"type": "message", "label": "🌟 今日運勢", "text": "今日運勢"}, "style": "secondary"}
@@ -420,6 +376,41 @@ def create_welcome_flex():
         }
     }
     return FlexSendMessage(alt_text='歡迎使用籟柏八字', contents=flex_content)
+
+def create_date_picker_flex():
+    """建立日期選擇器 Flex Message"""
+    flex_content = {
+        "type": "bubble",
+        "size": "kilo",
+        "header": {
+            "type": "box", "layout": "vertical",
+            "contents": [{"type": "text", "text": "🔮 八字排盤", "weight": "bold", "size": "lg", "color": "#FFFFFF"}],
+            "backgroundColor": "#8B4513", "paddingAll": "15px"
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "md",
+            "contents": [
+                {"type": "text", "text": "請選擇您的出生日期", "weight": "bold", "size": "md"},
+                {"type": "text", "text": "點選下方按鈕選擇日期", "size": "sm", "color": "#666666"},
+                {"type": "button",
+                 "action": {
+                     "type": "datetimepicker",
+                     "label": "📅 選擇出生日期",
+                     "data": "action=select_date",
+                     "mode": "date",
+                     "initial": "1990-01-01",
+                     "max": datetime.now().strftime("%Y-%m-%d"),
+                     "min": "1920-01-01"
+                 },
+                 "style": "primary",
+                 "color": "#8B4513",
+                 "margin": "md"
+                }
+            ],
+            "paddingAll": "15px"
+        }
+    }
+    return FlexSendMessage(alt_text='選擇出生日期', contents=flex_content)
 
 @app.route('/callback', methods=['POST'])
 def callback():
@@ -437,9 +428,25 @@ def health():
 
 @handler.add(FollowEvent)
 def handle_follow(event):
-    """加好友時發送歡迎訊息"""
+    """加好友歡迎訊息"""
     flex_msg = create_welcome_flex()
     line_bot_api.reply_message(event.reply_token, flex_msg)
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    """處理 Postback（日期選擇器回傳）"""
+    uid = event.source.user_id
+    data = event.postback.data
+    
+    if data == "action=select_date":
+        # 取得選擇的日期
+        date_str = event.postback.params.get('date', '')
+        if date_str:
+            y, m, d = map(int, date_str.split('-'))
+            user_states[uid] = {'step': 'hour', 'y': y, 'm': m, 'd': d}
+            qr = QuickReply(items=[QuickReplyButton(action=MessageAction(label=s, text=s)) for s in SHICHEN])
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                f'📅 出生日期：{y}年{m}月{d}日\n\n請選擇出生時辰：', quick_reply=qr))
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle(event):
@@ -447,20 +454,8 @@ def handle(event):
     
     if uid in user_states:
         st = user_states[uid]
-        if st['step'] == 'date':
-            try:
-                p = txt.replace('-', '/').replace('.', '/').split('/')
-                y, m, d = int(p[0]), int(p[1]), int(p[2])
-                if y < 1900 or y > 2100:
-                    raise ValueError
-                user_states[uid] = {'step': 'hour', 'y': y, 'm': m, 'd': d}
-                qr = QuickReply(items=[QuickReplyButton(action=MessageAction(label=s, text=s)) for s in SHICHEN])
-                line_bot_api.reply_message(event.reply_token, TextSendMessage('請選擇出生時辰：', quick_reply=qr))
-            except:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage('格式錯誤，請輸入 YYYY/MM/DD\n例如：1990/05/15'))
-            return
         
-        elif st['step'] == 'hour':
+        if st['step'] == 'hour':
             hr = next((i for i, s in enumerate(SHICHEN) if s in txt), -1)
             if hr == -1:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage('請選擇正確時辰'))
@@ -493,8 +488,9 @@ def handle(event):
             return
     
     if txt in ['排盤', '八字', '命盤', '八字排盤']:
-        user_states[uid] = {'step': 'date'}
-        line_bot_api.reply_message(event.reply_token, TextSendMessage('請輸入出生日期（國曆）\n格式：YYYY/MM/DD\n例如：1990/05/15'))
+        # 使用日期選擇器
+        flex_msg = create_date_picker_flex()
+        line_bot_api.reply_message(event.reply_token, flex_msg)
     
     elif txt in ['今日運勢', '運勢', '今日']:
         fortune = daily_fortune(uid)
