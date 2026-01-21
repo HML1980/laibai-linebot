@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 籟柏八字排盤 LINE Bot - 完整版
-含：四柱、藏干、十神、納音、大運、格局、Flex Message
-使用 DatetimePicker 選擇日期
+命盤與運勢分開顯示，每個功能完成後可回主選單
 """
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
@@ -187,8 +186,8 @@ def daily_fortune(uid):
         'advice': ['把握機會展現自我', '穩紮穩打步步為營', '貴人運強多交朋友', '專注目標心無旁騖', '調整心態迎接挑戰'][(seed+3) % 5]
     }
 
-def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fortune, year, gender):
-    """建立 Flex Message"""
+def create_bazi_flex(bazi, wx, missing, strength, pattern, dayun, rizhu, year):
+    """建立八字命盤 Flex Message（單獨一張卡片）"""
     dm = bazi['dm']
     nayin_year = get_nayin(bazi['year'])
     
@@ -211,127 +210,131 @@ def create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fort
         dayun_str += f"{dy['start']}-{dy['end']}: {dy['ganzhi']}{mark}\n"
     
     flex_content = {
-        "type": "carousel",
-        "contents": [
-            {
-                "type": "bubble",
-                "size": "giga",
-                "header": {
-                    "type": "box", "layout": "vertical",
-                    "contents": [{"type": "text", "text": "🔮 八字命盤", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
-                    "backgroundColor": "#8B4513", "paddingAll": "15px"
-                },
-                "body": {
-                    "type": "box", "layout": "vertical", "spacing": "md",
-                    "contents": [
-                        {"type": "text", "text": "【四柱八字】", "weight": "bold", "color": "#8B4513", "size": "md"},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "年柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": "月柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": "日柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": "時柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": ss_year[:1] if ss_year else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
-                            {"type": "text", "text": ss_month[:1] if ss_month else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
-                            {"type": "text", "text": "日主", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
-                            {"type": "text", "text": ss_hour[:1] if ss_hour else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": bazi['year'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"},
-                            {"type": "text", "text": bazi['month'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"},
-                            {"type": "text", "text": bazi['day'], "size": "xl", "weight": "bold", "flex": 1, "align": "center", "color": "#C41E3A"},
-                            {"type": "text", "text": bazi['hour'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": f"藏{cg_year}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": f"藏{cg_month}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": f"藏{cg_day}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
-                            {"type": "text", "text": f"藏{cg_hour}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"}
-                        ]},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": "【命理分析】", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
-                        {"type": "text", "text": f"納音：{nayin_year}", "size": "sm"},
-                        {"type": "text", "text": f"日主：{rizhu['name']}（{rizhu['nature']}）", "size": "sm"},
-                        {"type": "text", "text": f"格局：{pattern}（{strength}）", "size": "sm"},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": "【五行分析】", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
-                        {"type": "text", "text": wx_str, "size": "sm"},
-                        {"type": "text", "text": f"五行缺：{missing_str}", "size": "sm", "color": "#C41E3A"},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": f"【大運】現年{current_age}歲", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
-                        {"type": "text", "text": dayun_str.strip(), "size": "sm", "wrap": True}
-                    ],
-                    "paddingAll": "15px"
-                },
-                "footer": {
-                    "type": "box", "layout": "vertical",
-                    "contents": [{"type": "text", "text": "籟柏八字 ✨ 免費服務", "size": "xs", "color": "#AAAAAA", "align": "center"}],
-                    "paddingAll": "10px"
-                }
-            },
-            {
-                "type": "bubble",
-                "size": "giga",
-                "header": {
-                    "type": "box", "layout": "vertical",
-                    "contents": [{"type": "text", "text": "🌟 今日運勢", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
-                    "backgroundColor": "#4169E1", "paddingAll": "15px"
-                },
-                "body": {
-                    "type": "box", "layout": "vertical", "spacing": "md",
-                    "contents": [
-                        {"type": "text", "text": f"整體運勢：{fortune['overall']}", "size": "lg", "weight": "bold"},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": "【各方面運勢】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "💼 事業", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['career'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "💰 財運", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['wealth'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "💕 感情", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['love'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "💪 健康", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['health'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": "【開運指南】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "🔢 幸運數字", "size": "sm", "flex": 2},
-                            {"type": "text", "text": str(fortune['lucky_num']), "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "🎨 幸運色", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['lucky_color'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "box", "layout": "horizontal", "contents": [
-                            {"type": "text", "text": "🧭 吉利方位", "size": "sm", "flex": 2},
-                            {"type": "text", "text": fortune['lucky_dir'], "size": "sm", "flex": 3}
-                        ]},
-                        {"type": "separator", "margin": "md"},
-                        {"type": "text", "text": "💡 今日提醒", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
-                        {"type": "text", "text": fortune['advice'], "size": "sm", "wrap": True}
-                    ],
-                    "paddingAll": "15px"
-                },
-                "footer": {
-                    "type": "box", "layout": "vertical",
-                    "contents": [{"type": "text", "text": f"日期：{datetime.now():%Y/%m/%d}", "size": "xs", "color": "#AAAAAA", "align": "center"}],
-                    "paddingAll": "10px"
-                }
-            }
-        ]
+        "type": "bubble",
+        "size": "giga",
+        "header": {
+            "type": "box", "layout": "vertical",
+            "contents": [{"type": "text", "text": "🔮 八字命盤", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
+            "backgroundColor": "#8B4513", "paddingAll": "15px"
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "md",
+            "contents": [
+                {"type": "text", "text": "【四柱八字】", "weight": "bold", "color": "#8B4513", "size": "md"},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "年柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": "月柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": "日柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": "時柱", "size": "xs", "color": "#888888", "flex": 1, "align": "center"}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": ss_year[:1] if ss_year else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
+                    {"type": "text", "text": ss_month[:1] if ss_month else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
+                    {"type": "text", "text": "日主", "size": "xs", "color": "#666666", "flex": 1, "align": "center"},
+                    {"type": "text", "text": ss_hour[:1] if ss_hour else "", "size": "xs", "color": "#666666", "flex": 1, "align": "center"}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": bazi['year'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"},
+                    {"type": "text", "text": bazi['month'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"},
+                    {"type": "text", "text": bazi['day'], "size": "xl", "weight": "bold", "flex": 1, "align": "center", "color": "#C41E3A"},
+                    {"type": "text", "text": bazi['hour'], "size": "xl", "weight": "bold", "flex": 1, "align": "center"}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": f"藏{cg_year}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": f"藏{cg_month}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": f"藏{cg_day}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"},
+                    {"type": "text", "text": f"藏{cg_hour}", "size": "xxs", "color": "#888888", "flex": 1, "align": "center"}
+                ]},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": "【命理分析】", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
+                {"type": "text", "text": f"納音：{nayin_year}", "size": "sm"},
+                {"type": "text", "text": f"日主：{rizhu['name']}（{rizhu['nature']}）", "size": "sm"},
+                {"type": "text", "text": f"格局：{pattern}（{strength}）", "size": "sm"},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": "【五行分析】", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
+                {"type": "text", "text": wx_str, "size": "sm"},
+                {"type": "text", "text": f"五行缺：{missing_str}", "size": "sm", "color": "#C41E3A"},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": f"【大運】現年{current_age}歲", "weight": "bold", "color": "#8B4513", "size": "md", "margin": "md"},
+                {"type": "text", "text": dayun_str.strip(), "size": "sm", "wrap": True}
+            ],
+            "paddingAll": "15px"
+        },
+        "footer": {
+            "type": "box", "layout": "vertical", "spacing": "sm",
+            "contents": [
+                {"type": "button", "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"}, "style": "secondary", "height": "sm"}
+            ],
+            "paddingAll": "10px"
+        }
     }
-    return FlexSendMessage(alt_text='八字命盤與今日運勢', contents=flex_content)
+    return FlexSendMessage(alt_text='八字命盤', contents=flex_content)
 
-def create_welcome_flex():
-    """歡迎訊息"""
+def create_fortune_flex(fortune):
+    """建立今日運勢 Flex Message（單獨一張卡片）"""
+    flex_content = {
+        "type": "bubble",
+        "size": "giga",
+        "header": {
+            "type": "box", "layout": "vertical",
+            "contents": [{"type": "text", "text": "🌟 今日運勢", "weight": "bold", "size": "xl", "color": "#FFFFFF"}],
+            "backgroundColor": "#4169E1", "paddingAll": "15px"
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "md",
+            "contents": [
+                {"type": "text", "text": f"整體運勢：{fortune['overall']}", "size": "lg", "weight": "bold"},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": "【各方面運勢】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "💼 事業", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['career'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "💰 財運", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['wealth'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "💕 感情", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['love'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "💪 健康", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['health'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": "【開運指南】", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "🔢 幸運數字", "size": "sm", "flex": 2},
+                    {"type": "text", "text": str(fortune['lucky_num']), "size": "sm", "flex": 3}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "🎨 幸運色", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['lucky_color'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "box", "layout": "horizontal", "contents": [
+                    {"type": "text", "text": "🧭 吉利方位", "size": "sm", "flex": 2},
+                    {"type": "text", "text": fortune['lucky_dir'], "size": "sm", "flex": 3}
+                ]},
+                {"type": "separator", "margin": "md"},
+                {"type": "text", "text": "💡 今日提醒", "weight": "bold", "color": "#4169E1", "size": "md", "margin": "md"},
+                {"type": "text", "text": fortune['advice'], "size": "sm", "wrap": True}
+            ],
+            "paddingAll": "15px"
+        },
+        "footer": {
+            "type": "box", "layout": "vertical", "spacing": "sm",
+            "contents": [
+                {"type": "text", "text": f"日期：{datetime.now():%Y/%m/%d}", "size": "xs", "color": "#AAAAAA", "align": "center"},
+                {"type": "button", "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"}, "style": "secondary", "height": "sm", "margin": "md"}
+            ],
+            "paddingAll": "10px"
+        }
+    }
+    return FlexSendMessage(alt_text='今日運勢', contents=flex_content)
+
+def create_menu_flex():
+    """建立主選單 Flex Message"""
     flex_content = {
         "type": "bubble",
         "size": "mega",
@@ -346,23 +349,18 @@ def create_welcome_flex():
         "body": {
             "type": "box", "layout": "vertical", "spacing": "lg",
             "contents": [
-                {"type": "text", "text": "歡迎使用籟柏八字排盤系統！", "weight": "bold", "size": "md"},
+                {"type": "text", "text": "請選擇功能", "weight": "bold", "size": "lg", "align": "center"},
                 {"type": "separator"},
-                {"type": "text", "text": "📌 功能介紹", "weight": "bold", "color": "#8B4513", "size": "md"},
                 {"type": "box", "layout": "vertical", "spacing": "sm", "contents": [
-                    {"type": "text", "text": "🔮 排盤 - 完整八字命盤分析", "size": "sm"},
-                    {"type": "text", "text": "   • 四柱（年月日時）+ 藏干", "size": "xs", "color": "#666666"},
-                    {"type": "text", "text": "   • 十神、納音、格局判斷", "size": "xs", "color": "#666666"},
-                    {"type": "text", "text": "   • 五行分析、大運排列", "size": "xs", "color": "#666666"}
+                    {"type": "text", "text": "🔮 排盤", "size": "md", "weight": "bold"},
+                    {"type": "text", "text": "完整八字命盤分析", "size": "sm", "color": "#666666"},
+                    {"type": "text", "text": "四柱、藏干、十神、五行、大運", "size": "xs", "color": "#888888"}
                 ]},
                 {"type": "box", "layout": "vertical", "spacing": "sm", "contents": [
-                    {"type": "text", "text": "🌟 今日運勢 - 每日運勢預測", "size": "sm"},
-                    {"type": "text", "text": "   • 事業、財運、感情、健康", "size": "xs", "color": "#666666"},
-                    {"type": "text", "text": "   • 幸運數字、顏色、方位", "size": "xs", "color": "#666666"}
-                ]},
-                {"type": "separator"},
-                {"type": "text", "text": "💡 使用方式", "weight": "bold", "color": "#8B4513", "size": "md"},
-                {"type": "text", "text": "點選下方按鈕開始 👇", "size": "sm", "wrap": True}
+                    {"type": "text", "text": "🌟 今日運勢", "size": "md", "weight": "bold"},
+                    {"type": "text", "text": "每日運勢預測", "size": "sm", "color": "#666666"},
+                    {"type": "text", "text": "事業、財運、感情、健康、開運指南", "size": "xs", "color": "#888888"}
+                ]}
             ],
             "paddingAll": "20px"
         },
@@ -370,15 +368,15 @@ def create_welcome_flex():
             "type": "box", "layout": "horizontal", "spacing": "md",
             "contents": [
                 {"type": "button", "action": {"type": "message", "label": "🔮 排盤", "text": "排盤"}, "style": "primary", "color": "#8B4513"},
-                {"type": "button", "action": {"type": "message", "label": "🌟 今日運勢", "text": "今日運勢"}, "style": "secondary"}
+                {"type": "button", "action": {"type": "message", "label": "🌟 今日運勢", "text": "今日運勢"}, "style": "primary", "color": "#4169E1"}
             ],
             "paddingAll": "15px"
         }
     }
-    return FlexSendMessage(alt_text='歡迎使用籟柏八字', contents=flex_content)
+    return FlexSendMessage(alt_text='籟柏八字主選單', contents=flex_content)
 
 def create_date_picker_flex():
-    """建立日期選擇器 Flex Message"""
+    """建立日期選擇器"""
     flex_content = {
         "type": "bubble",
         "size": "kilo",
@@ -402,9 +400,11 @@ def create_date_picker_flex():
                      "max": datetime.now().strftime("%Y-%m-%d"),
                      "min": "1920-01-01"
                  },
-                 "style": "primary",
-                 "color": "#8B4513",
-                 "margin": "md"
+                 "style": "primary", "color": "#8B4513", "margin": "md"
+                },
+                {"type": "button",
+                 "action": {"type": "message", "label": "🏠 回主選單", "text": "主選單"},
+                 "style": "secondary", "margin": "sm"
                 }
             ],
             "paddingAll": "15px"
@@ -429,17 +429,16 @@ def health():
 @handler.add(FollowEvent)
 def handle_follow(event):
     """加好友歡迎訊息"""
-    flex_msg = create_welcome_flex()
+    flex_msg = create_menu_flex()
     line_bot_api.reply_message(event.reply_token, flex_msg)
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
-    """處理 Postback（日期選擇器回傳）"""
+    """處理日期選擇器回傳"""
     uid = event.source.user_id
     data = event.postback.data
     
     if data == "action=select_date":
-        # 取得選擇的日期
         date_str = event.postback.params.get('date', '')
         if date_str:
             y, m, d = map(int, date_str.split('-'))
@@ -479,48 +478,38 @@ def handle(event):
                 strength, pattern = judge_pattern(bazi, wx)
                 dayun = calc_dayun(bazi, gender, y)
                 rizhu = RIZHU_DESC[bazi['dm']]
-                fortune = daily_fortune(uid)
                 
-                flex_msg = create_flex_message(bazi, wx, missing, strength, pattern, dayun, rizhu, fortune, y, gender)
+                flex_msg = create_bazi_flex(bazi, wx, missing, strength, pattern, dayun, rizhu, y)
                 line_bot_api.reply_message(event.reply_token, flex_msg)
             except Exception as e:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(f'排盤錯誤：{str(e)}'))
             return
     
-    if txt in ['排盤', '八字', '命盤', '八字排盤']:
-        # 使用日期選擇器
+    # 主選單
+    if txt in ['主選單', '選單', 'menu', '首頁', '回首頁']:
+        flex_msg = create_menu_flex()
+        line_bot_api.reply_message(event.reply_token, flex_msg)
+    
+    # 排盤
+    elif txt in ['排盤', '八字', '命盤', '八字排盤']:
         flex_msg = create_date_picker_flex()
         line_bot_api.reply_message(event.reply_token, flex_msg)
     
+    # 今日運勢
     elif txt in ['今日運勢', '運勢', '今日']:
         fortune = daily_fortune(uid)
-        msg = f"""🌟 今日運勢 🌟
-
-整體：{fortune['overall']}
-
-💼 事業：{fortune['career']}
-💰 財運：{fortune['wealth']}
-💕 感情：{fortune['love']}
-💪 健康：{fortune['health']}
-
-🔢 幸運數字：{fortune['lucky_num']}
-🎨 幸運色：{fortune['lucky_color']}
-🧭 吉方：{fortune['lucky_dir']}
-
-💡 {fortune['advice']}"""
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(msg))
-    
-    elif txt in ['說明', '功能', '幫助', 'help', '你好', 'hi', 'Hi', '嗨']:
-        flex_msg = create_welcome_flex()
+        flex_msg = create_fortune_flex(fortune)
         line_bot_api.reply_message(event.reply_token, flex_msg)
     
+    # 說明
+    elif txt in ['說明', '功能', '幫助', 'help', '你好', 'hi', 'Hi', '嗨']:
+        flex_msg = create_menu_flex()
+        line_bot_api.reply_message(event.reply_token, flex_msg)
+    
+    # 其他
     else:
-        qr = QuickReply(items=[
-            QuickReplyButton(action=MessageAction(label='🔮 排盤', text='排盤')),
-            QuickReplyButton(action=MessageAction(label='🌟 今日運勢', text='今日運勢')),
-            QuickReplyButton(action=MessageAction(label='❓ 說明', text='說明'))
-        ])
-        line_bot_api.reply_message(event.reply_token, TextSendMessage('歡迎使用籟柏八字！請選擇功能：', quick_reply=qr))
+        flex_msg = create_menu_flex()
+        line_bot_api.reply_message(event.reply_token, flex_msg)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
