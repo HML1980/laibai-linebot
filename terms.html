@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服務條款 | 籟柏</title>
+    <meta name="description" content="籟柏服務條款說明">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #2d4a3e;
+            --primary-darker: #1e3329;
+            --accent-gold: #e8c547;
+            --accent-gold-light: #f5d96a;
+            --text-light: #f5f5f0;
+            --text-muted: #b8c4b8;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --border-subtle: rgba(232, 197, 71, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background: linear-gradient(160deg, var(--primary-darker) 0%, var(--primary-dark) 50%, #3d5a4e 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            line-height: 1.8;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(232, 197, 71, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(232, 197, 71, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            padding: 40px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 40px;
+        }
+
+        .logo-link {
+            text-decoration: none;
+        }
+
+        .logo {
+            display: inline-block;
+            background: var(--primary-darker);
+            padding: 16px 32px;
+            border: 2px solid var(--border-subtle);
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 0.3em;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--accent-gold);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .content h2 {
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            margin: 32px 0 16px;
+        }
+
+        .content h2:first-child {
+            margin-top: 0;
+        }
+
+        .content p {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .content ul {
+            color: var(--text-muted);
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .content li {
+            margin-bottom: 8px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--accent-gold);
+            text-decoration: none;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .back-link::before {
+            content: '← ';
+        }
+
+        .update-date {
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin: 0 16px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-gold);
+        }
+
+        .copyright {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 24px;
+            }
+
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="logo-link">
+                <div class="logo">
+                    <h1>籟柏</h1>
+                </div>
+            </a>
+        </header>
+
+        <a href="index.html" class="back-link">返回首頁</a>
+
+        <h1 class="page-title">服務條款</h1>
+
+        <div class="content">
+            <h2>一、服務條款的接受</h2>
+            <p>歡迎使用籟柏（以下簡稱「本服務」）提供的紫微斗數及八字命理 LINE Bot 服務。當您開始使用本服務時，即表示您已閱讀、瞭解並同意遵守本服務條款的所有內容。若您不同意本條款，請勿使用本服務。</p>
+
+            <h2>二、服務內容</h2>
+            <p>本服務透過 LINE Bot 提供以下功能：</p>
+            <ul>
+                <li>紫微斗數命盤排列</li>
+                <li>八字命盤排列</li>
+                <li>今日運勢查詢</li>
+            </ul>
+            <p>本服務目前為免費提供。本服務保留隨時修改、暫停或終止服務內容的權利，恕不另行通知。</p>
+
+            <h2>三、服務性質聲明</h2>
+            <p>本服務提供的紫微斗數及八字命理資訊僅供參考與娛樂用途。命理分析結果不應被視為專業建議，包括但不限於：</p>
+            <ul>
+                <li>醫療或健康建議</li>
+                <li>財務或投資建議</li>
+                <li>法律建議</li>
+                <li>人生重大決策的依據</li>
+            </ul>
+            <p>使用者應自行判斷並對自己的決定負責。本服務不對任何因使用本服務資訊而產生的損失或損害負責。</p>
+
+            <h2>四、使用者責任</h2>
+            <p>使用本服務時，您同意：</p>
+            <ul>
+                <li>提供正確的出生資料以獲得準確的排盤結果</li>
+                <li>不得利用本服務從事任何違法或不當行為</li>
+                <li>不得嘗試干擾或破壞本服務的正常運作</li>
+                <li>不得將本服務用於商業目的（如轉售服務內容）</li>
+                <li>遵守 LINE 平台的使用規範</li>
+            </ul>
+
+            <h2>五、智慧財產權</h2>
+            <p>本服務的所有內容，包括但不限於文字、圖形、程式碼、介面設計等，均受著作權法及其他智慧財產權法律保護。未經本服務書面授權，您不得複製、修改、散布或以其他方式使用本服務的任何內容。</p>
+
+            <h2>六、免責聲明</h2>
+            <p>本服務以「現況」提供，不提供任何明示或暗示的保證，包括但不限於：</p>
+            <ul>
+                <li>服務將不間斷或無錯誤</li>
+                <li>服務結果的準確性或可靠性</li>
+                <li>服務將符合您的特定需求</li>
+            </ul>
+            <p>在法律允許的最大範圍內，本服務不對任何直接、間接、附帶、特殊或衍生性損害負責。</p>
+
+            <h2>七、服務變更與終止</h2>
+            <p>本服務保留以下權利：</p>
+            <ul>
+                <li>隨時修改或更新本服務條款</li>
+                <li>隨時變更、暫停或終止服務的全部或部分功能</li>
+                <li>在使用者違反本條款時，終止其使用權限</li>
+            </ul>
+
+            <h2>八、準據法與管轄</h2>
+            <p>本服務條款的解釋與適用，以中華民國法律為準據法。因本條款所生之爭議，雙方同意以臺灣彰化地方法院為第一審管轄法院。</p>
+
+            <h2>九、聯絡方式</h2>
+            <p>如對本服務條款有任何疑問，歡迎透過以下方式與我們聯繫：</p>
+            <p>電子郵件：linebooks2026@gmail.com</p>
+
+            <div class="update-date">
+                最後更新日期：2025 年 2 月
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-links">
+                <a href="index.html">首頁</a>
+                <a href="privacy.html">隱私權政策</a>
+                <a href="terms.html">服務條款</a>
+            </div>
+            <p class="copyright">© 2025 籟柏 Laibai. All Rights Reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
