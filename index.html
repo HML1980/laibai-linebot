@@ -3,332 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>籟柏 | 紫微八字命理服務</title>
-    <meta name="description" content="籟柏提供專業的紫微斗數與八字命理 LINE Bot 服務，免費體驗排盤與今日運勢查詢。">
-    <meta name="keywords" content="紫微斗數, 八字, 命理, LINE Bot, 排盤, 運勢">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>籟柏 - 紫微斗數・八字命理・易經占卜 LINE Bot 服務</title>
+    <meta name="description" content="籟柏提供專業紫微斗數、八字命理、太極易占 LINE Bot 服務，傳承千年東方智慧，為您指引人生方向。">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
     <style>
-        :root {
-            --primary-dark: #2d4a3e;
-            --primary-darker: #1e3329;
-            --accent-gold: #e8c547;
-            --accent-gold-light: #f5d96a;
-            --text-light: #f5f5f0;
-            --text-muted: #b8c4b8;
-            --bg-card: rgba(255, 255, 255, 0.05);
-            --border-subtle: rgba(232, 197, 71, 0.2);
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Noto Serif TC', serif;
-            background: linear-gradient(160deg, var(--primary-darker) 0%, var(--primary-dark) 50%, #3d5a4e 100%);
-            color: var(--text-light);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+            background: #2d4a3e;
             min-height: 100vh;
+            color: #fff;
             line-height: 1.8;
         }
-
-        /* 背景裝飾 */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(232, 197, 71, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(232, 197, 71, 0.03) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
+        
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 0 24px;
-            position: relative;
-            z-index: 1;
+            padding: 40px 20px;
         }
-
+        
         /* Header */
         header {
-            padding: 60px 0 40px;
             text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
         }
-
-        .logo {
-            display: inline-block;
-            background: var(--primary-darker);
-            padding: 24px 48px;
-            border: 2px solid var(--border-subtle);
-            margin-bottom: 24px;
+        
+        .logo-img {
+            width: 140px;
+            height: auto;
+            margin-bottom: 20px;
         }
-
-        .logo h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--accent-gold);
-            letter-spacing: 0.3em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        
+        h1 {
+            font-size: 42px;
+            margin-bottom: 15px;
+            color: #ffd700;
+            letter-spacing: 8px;
         }
-
-        .tagline {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            letter-spacing: 0.2em;
+        
+        .subtitle {
+            color: #ccc;
+            font-size: 16px;
+            letter-spacing: 2px;
         }
-
+        
         /* Section */
-        section {
-            margin-bottom: 60px;
+        .section {
+            margin-bottom: 50px;
         }
-
+        
         .section-title {
-            font-size: 1.5rem;
-            color: var(--accent-gold);
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-subtle);
-            letter-spacing: 0.1em;
+            font-size: 20px;
+            color: #ffd700;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,215,0,0.3);
+            letter-spacing: 2px;
         }
-
-        /* 產品卡片 */
-        .products {
+        
+        /* Service Cards */
+        .service-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+            gap: 25px;
         }
-
-        .product-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            padding: 32px;
+        
+        .service-card {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 12px;
+            padding: 30px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
-
-        .product-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent-gold);
-            transform: translateY(-4px);
+        
+        .service-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-
-        .product-card h3 {
-            font-size: 1.5rem;
-            color: var(--accent-gold);
-            margin-bottom: 16px;
-        }
-
-        .product-card p {
-            color: var(--text-muted);
+        
+        .service-card h3 {
+            font-size: 22px;
+            color: #ffd700;
             margin-bottom: 8px;
-            font-size: 0.95rem;
         }
-
-        .product-card .features {
-            margin: 20px 0;
+        
+        .service-card .service-type {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+        
+        .service-card ul {
             text-align: left;
-            padding-left: 20px;
-        }
-
-        .product-card .features li {
-            margin-bottom: 8px;
-            color: var(--text-light);
-        }
-
-        .product-card .price {
-            font-size: 1.3rem;
-            color: var(--accent-gold-light);
+            list-style: none;
             margin: 20px 0;
-            font-weight: 600;
         }
-
+        
+        .service-card li {
+            padding: 8px 0;
+            color: #ddd;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .service-card li:last-child {
+            border-bottom: none;
+        }
+        
+        .service-card .price-tag {
+            display: inline-block;
+            background: rgba(255,215,0,0.15);
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        
         .btn {
             display: inline-block;
-            background: var(--accent-gold);
-            color: var(--primary-darker);
-            padding: 14px 32px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            letter-spacing: 0.1em;
-            transition: all 0.3s ease;
-            border: 2px solid var(--accent-gold);
-        }
-
-        .btn:hover {
             background: transparent;
-            color: var(--accent-gold);
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-top: 10px;
         }
-
-        /* 關於我們 */
+        
+        .btn:hover {
+            background: #ffd700;
+            color: #2d4a3e;
+        }
+        
+        .btn-line {
+            background: #06C755;
+            border-color: #06C755;
+            color: #fff;
+        }
+        
+        .btn-line:hover {
+            background: #05b04c;
+            border-color: #05b04c;
+            color: #fff;
+        }
+        
+        /* Pricing Section */
+        .pricing-highlight {
+            background: rgba(255,215,0,0.08);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .pricing-highlight h3 {
+            color: #ffd700;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .price-table th,
+        .price-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,215,0,0.15);
+        }
+        
+        .price-table th {
+            color: #ffd700;
+            font-weight: normal;
+            font-size: 14px;
+        }
+        
+        .price-table td {
+            color: #ddd;
+            font-size: 14px;
+        }
+        
+        .price-table .price {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .price-table .free {
+            color: #4ade80;
+        }
+        
+        /* About Section */
         .about-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            padding: 32px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 12px;
+            padding: 30px;
         }
-
+        
         .about-content p {
-            margin-bottom: 16px;
-            color: var(--text-muted);
+            color: #ccc;
+            margin-bottom: 15px;
+            font-size: 15px;
         }
-
-        /* 聯絡資訊 */
+        
+        .about-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Contact Section */
         .contact-info {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            padding: 32px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 12px;
+            padding: 30px;
         }
-
+        
         .contact-item {
             display: flex;
             align-items: center;
-            margin-bottom: 16px;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-
+        
         .contact-item:last-child {
-            margin-bottom: 0;
+            border-bottom: none;
         }
-
-        .contact-item .label {
-            color: var(--accent-gold);
-            min-width: 100px;
-            font-weight: 600;
-        }
-
-        .contact-item a {
-            color: var(--text-light);
-            text-decoration: none;
-        }
-
-        .contact-item a:hover {
-            color: var(--accent-gold);
-        }
-
-        /* Footer */
-        footer {
-            border-top: 1px solid var(--border-subtle);
-            padding: 40px 0;
+        
+        .contact-item .icon {
+            font-size: 20px;
+            width: 30px;
             text-align: center;
         }
-
-        .footer-links {
-            margin-bottom: 20px;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
+        
+        .contact-item a {
+            color: #ffd700;
             text-decoration: none;
-            margin: 0 16px;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
         }
-
-        .footer-links a:hover {
-            color: var(--accent-gold);
+        
+        .contact-item a:hover {
+            text-decoration: underline;
         }
-
-        .copyright {
-            color: var(--text-muted);
-            font-size: 0.85rem;
+        
+        .contact-item span {
+            color: #ccc;
         }
-
-        /* RWD */
+        
+        /* Payment Methods */
+        .payment-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .payment-title {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 15px;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .payment-badge {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #ccc;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255,215,0,0.2);
+        }
+        
+        footer p {
+            color: #888;
+            font-size: 13px;
+            margin: 8px 0;
+        }
+        
+        footer a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
         @media (max-width: 600px) {
-            .logo h1 {
-                font-size: 2.5rem;
+            h1 {
+                font-size: 32px;
+                letter-spacing: 4px;
             }
-
-            .logo {
-                padding: 20px 32px;
+            
+            .service-card {
+                padding: 25px 20px;
             }
-
-            header {
-                padding: 40px 0 30px;
-            }
-
-            .product-card {
-                padding: 24px;
+            
+            .price-table th,
+            .price-table td {
+                padding: 10px 8px;
+                font-size: 13px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
-            <div class="logo">
-                <h1>籟柏</h1>
-            </div>
-            <p class="tagline">紫微斗數 · 八字命理 · LINE Bot 服務</p>
+            <img src="logo.jpg" alt="籟柏" class="logo-img">
+            <h1>籟 柏</h1>
+            <p class="subtitle">紫微斗數 · 八字命理 · 易經占卜 · LINE Bot 服務</p>
         </header>
 
-        <section id="products">
+        <!-- 服務項目 -->
+        <div class="section">
             <h2 class="section-title">服務項目</h2>
-            <div class="products">
-                <div class="product-card">
+            
+            <div class="service-grid">
+                <!-- 籟柏紫微 -->
+                <div class="service-card">
                     <h3>籟柏紫微</h3>
-                    <p>紫微斗數命盤分析</p>
-                    <ul class="features">
-                        <li>紫微斗數排盤</li>
-                        <li>今日運勢查詢</li>
-                        <li>即時線上服務</li>
+                    <p class="service-type">紫微斗數命盤分析</p>
+                    <ul>
+                        <li>🔮 紫微斗數排盤</li>
+                        <li>📅 今日運勢查詢</li>
+                        <li>💎 幸運物品推薦</li>
                     </ul>
-                    <div class="price">免費使用</div>
-                    <a href="https://line.me/R/ti/p/@185lkvoz" class="btn" target="_blank">加入好友</a>
+                    <div class="price-tag">免費使用</div>
+                    <br>
+                    <a href="https://line.me/R/ti/p/@558nglgd" class="btn btn-line">加入好友</a>
                 </div>
-
-                <div class="product-card">
+                
+                <!-- 籟柏八字 -->
+                <div class="service-card">
                     <h3>籟柏八字</h3>
-                    <p>八字命理分析</p>
-                    <ul class="features">
-                        <li>八字排盤</li>
-                        <li>今日運勢查詢</li>
-                        <li>即時線上服務</li>
+                    <p class="service-type">八字命理分析</p>
+                    <ul>
+                        <li>🔮 八字排盤</li>
+                        <li>📅 今日運勢查詢</li>
+                        <li>💎 幸運物品推薦</li>
                     </ul>
-                    <div class="price">免費使用</div>
-                    <a href="https://line.me/R/ti/p/@140plghs" class="btn" target="_blank">加入好友</a>
+                    <div class="price-tag">免費使用</div>
+                    <br>
+                    <a href="https://line.me/R/ti/p/@bazi-laibai" class="btn btn-line">加入好友</a>
+                </div>
+                
+                <!-- 籟柏太極易占 -->
+                <div class="service-card">
+                    <h3>籟柏太極易占</h3>
+                    <p class="service-type">易經六十四卦占卜</p>
+                    <ul>
+                        <li>☯️ 太極陰陽魚搖卦</li>
+                        <li>🎴 六十四卦解讀</li>
+                        <li>💕 合卦配對</li>
+                        <li>📅 每日運勢</li>
+                    </ul>
+                    <div class="price-tag">免費 / VIP</div>
+                    <br>
+                    <a href="https://line.me/R/ti/p/@454oablf" class="btn btn-line">加入好友</a>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="about">
-            <h2 class="section-title">關於籟柏</h2>
-            <div class="about-content">
-                <p>籟柏致力於將傳統命理學與現代科技結合，透過 LINE Bot 提供便捷的紫微斗數與八字命理服務。</p>
-                <p>我們相信，古老的智慧可以透過新的方式傳承。無論您是對命理有興趣的初學者，或是希望隨時查詢運勢的使用者，籟柏都能為您提供即時、方便的服務。</p>
-                <p>目前所有服務皆為免費提供，歡迎加入體驗。</p>
+        <!-- 收費說明 -->
+        <div class="section" id="pricing">
+            <h2 class="section-title">收費說明</h2>
+            
+            <div class="pricing-highlight">
+                <h3>👑 籟柏太極易占 - 服務方案</h3>
+                
+                <table class="price-table">
+                    <tr>
+                        <th>方案</th>
+                        <th>內容</th>
+                        <th>價格</th>
+                    </tr>
+                    <tr>
+                        <td>免費版</td>
+                        <td>每日3次占卜、基礎解讀、每月1次配對</td>
+                        <td class="free">免費</td>
+                    </tr>
+                    <tr>
+                        <td>VIP 月訂閱</td>
+                        <td>無限占卜、詳細解讀、無限配對、週報月報</td>
+                        <td class="price">NT$99/月</td>
+                    </tr>
+                    <tr>
+                        <td>VIP 季訂閱</td>
+                        <td>同上，平均每月 NT$83</td>
+                        <td class="price">NT$249/季</td>
+                    </tr>
+                    <tr>
+                        <td>VIP 年訂閱</td>
+                        <td>同上，平均每月 NT$67</td>
+                        <td class="price">NT$799/年</td>
+                    </tr>
+                    <tr>
+                        <td>AI 深度解讀</td>
+                        <td>300字以上個人化分析</td>
+                        <td class="price">NT$49/次</td>
+                    </tr>
+                    <tr>
+                        <td>AI 解讀 3次包</td>
+                        <td>每次 NT$43</td>
+                        <td class="price">NT$129</td>
+                    </tr>
+                    <tr>
+                        <td>AI 解讀 5次包</td>
+                        <td>每次 NT$40</td>
+                        <td class="price">NT$199</td>
+                    </tr>
+                </table>
             </div>
-        </section>
+            
+            <!-- 付款方式 -->
+            <div class="payment-section">
+                <p class="payment-title">💳 付款方式</p>
+                <div class="payment-methods">
+                    <span class="payment-badge">信用卡</span>
+                    <span class="payment-badge">ATM 轉帳</span>
+                    <span class="payment-badge">超商代碼</span>
+                </div>
+                <p style="color: #666; font-size: 12px; margin-top: 15px;">
+                    採用綠界科技 ECPay 安全金流，交易全程 SSL 加密
+                </p>
+            </div>
+        </div>
 
-        <section id="contact">
+        <!-- 關於籟柏 -->
+        <div class="section">
+            <h2 class="section-title">關於籟柏</h2>
+            
+            <div class="about-content">
+                <p>籟柏致力於將傳統命理智慧與現代科技結合，透過 LINE Bot 提供最便利的紫微斗數、八字命理服務。</p>
+                <p>我們相信，古老的智慧可以用更簡單的方式呈現。無論您想了解今日運勢或尋求人生指引，籟柏都將是您最佳的智慧夥伴。</p>
+                <p>無論是命盤分析或今日運勢預測，籟柏都能以最貼近您生活的方式，為您帶來啟發與指引。</p>
+            </div>
+        </div>
+
+        <!-- 聯絡我們 -->
+        <div class="section">
             <h2 class="section-title">聯絡我們</h2>
+            
             <div class="contact-info">
                 <div class="contact-item">
-                    <span class="label">電子郵件</span>
-                    <a href="mailto:linebooks2026@gmail.com">linebooks2026@gmail.com</a>
+                    <span class="icon">📧</span>
+                    <div>
+                        <span>電子郵件</span><br>
+                        <a href="/cdn-cgi/l/email-protection#7a1613141f161b15181b13484a484e3a1d171b131654191517"><span class="__cf_email__" data-cfemail="0a6663646f666b65686b63383a383e4a6d676b636624696567">[email&#160;protected]</span></a>
+                    </div>
                 </div>
                 <div class="contact-item">
-                    <span class="label">服務時間</span>
-                    <span>LINE Bot 24 小時自動服務</span>
+                    <span class="icon">💬</span>
+                    <div>
+                        <span>服務時間</span><br>
+                        LINE Bot 24 小時自動服務
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
 
+        <!-- Footer -->
         <footer>
-            <div class="footer-links">
-                <a href="privacy.html">隱私權政策</a>
-                <a href="terms.html">服務條款</a>
-            </div>
-            <p class="copyright">© 2025 籟柏 Laibai. All Rights Reserved.</p>
-        </footer>
-    </div>
-</body>
-</html>
+            <p><a href="#pricing">服務收費</a> ·
