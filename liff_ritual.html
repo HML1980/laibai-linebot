@@ -159,7 +159,6 @@
     </div>
 
     <script>
-        let liffId = null;
         let question = '';
         let category = '';
         
@@ -175,21 +174,41 @@
         // 初始化 LIFF
         async function initLiff() {
             try {
-                // 從 URL 取得 LIFF ID（由 Bot 傳入）
-                const params = new URLSearchParams(window.location.search);
-                liffId = '2009324878-nt7JFlct';
-                
-                await liff.init({ liffId: liffId });
+                await liff.init({ liffId: '2009324878-nt7JFlct' });
                 console.log('LIFF 初始化成功');
+                
+                // 檢查是否在 LINE 內
+                if (!liff.isInClient()) {
+                    showDesktopMessage();
+                    return;
+                }
                 
                 // 開始播放影片
                 playVideo();
                 
             } catch (error) {
                 console.error('LIFF 初始化失敗:', error);
-                // 即使 LIFF 失敗，也播放影片
                 playVideo();
             }
+        }
+        
+        // 電腦版提示
+        function showDesktopMessage() {
+            document.querySelector('.container').innerHTML = `
+                <h1 class="title">☯ 太極問事 ☯</h1>
+                <div class="question-box">
+                    <div class="question-label">📿 您的問題</div>
+                    <div class="question-text">${question}</div>
+                </div>
+                <div style="margin: 30px 0; padding: 20px; background: rgba(255,215,0,0.1); border-radius: 12px;">
+                    <p style="font-size: 16px; color: #FFD700; margin-bottom: 15px;">📱 請使用手機開啟</p>
+                    <p style="font-size: 14px; color: #ccc; line-height: 1.6;">
+                        搖卦儀式需要在 LINE 手機版中進行<br>
+                        請在手機上重新操作
+                    </p>
+                </div>
+                <button class="btn show" onclick="window.close()" style="background: #666;">關閉此頁面</button>
+            `;
         }
         
         // 播放影片
@@ -207,7 +226,7 @@
                 document.getElementById('open-btn').classList.add('show');
             });
             
-            // 備用：5秒後顯示按鈕（防止影片載入失敗）
+            // 備用：6秒後顯示按鈕
             setTimeout(function() {
                 document.getElementById('open-btn').classList.add('show');
             }, 6000);
@@ -222,20 +241,15 @@
             loading.classList.add('show');
             
             try {
-                if (liff.isInClient()) {
-                    // 在 LINE 內，發送訊息給 Bot
-                    await liff.sendMessages([{
-                        type: 'text',
-                        text: `開卦:${category}:${question}`
-                    }]);
-                    
-                    // 關閉 LIFF
-                    liff.closeWindow();
-                } else {
-                    // 在外部瀏覽器，跳轉回 LINE
-                    alert('請在 LINE 中開啟此頁面');
-                    window.close();
-                }
+                // 發送訊息給 Bot
+                await liff.sendMessages([{
+                    type: 'text',
+                    text: `開卦:${category}:${question}`
+                }]);
+                
+                // 關閉 LIFF
+                liff.closeWindow();
+                
             } catch (error) {
                 console.error('發送訊息失敗:', error);
                 loading.classList.remove('show');
